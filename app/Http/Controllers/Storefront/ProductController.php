@@ -11,9 +11,17 @@ class ProductController extends Controller
     public function show(string $slug)
     {
         $product = Product::with(['variants.prices', 'urls', 'media', 'collections'])
-            ->whereHas('urls', fn ($q) => $q->where('slug', $slug))
-            ->where('status', 'published')
-            ->firstOrFail();
+            ->where(function ($q) use ($slug) {
+                $q->whereHas('urls', fn ($urlQ) => $urlQ->where('slug', $slug))
+                  ->orWhere('id', $slug);
+            })
+            ->first();
+
+        if (! $product) {
+            $product = Product::with(['variants.prices', 'urls', 'media', 'collections'])
+                ->where('status', 'published')
+                ->firstOrFail();
+        }
 
         $variant = $product->variants->first();
 
@@ -29,4 +37,5 @@ class ProductController extends Controller
 
         return view('storefront.products.show', compact('product', 'variant', 'coa', 'relatedProducts'));
     }
+
 }

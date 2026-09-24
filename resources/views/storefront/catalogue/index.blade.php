@@ -84,12 +84,12 @@
                             <div class="product-card group flex flex-col justify-between">
                                 <div>
                                     {{-- Image Area --}}
-                                    <div class="image-wrap relative aspect-square flex items-center justify-center bg-[var(--color-bg-elevated)] overflow-hidden">
+                                    <a href="{{ route('products.show', $slug) }}" class="image-wrap relative aspect-square flex items-center justify-center bg-[var(--color-bg-elevated)] overflow-hidden block">
                                         <img src="{{ $product->media->first()?->getUrl() ?: asset('images/product-vial-dummy.png') }}"
                                              alt="{{ $name }}"
                                              class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                         <span class="absolute top-3 left-3 badge badge-accent z-10">99%+ Purity</span>
-                                    </div>
+                                    </a>
 
                                     {{-- Info Body --}}
                                     <div class="info p-4">
