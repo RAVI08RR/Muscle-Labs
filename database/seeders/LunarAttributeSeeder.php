@@ -37,8 +37,36 @@ class LunarAttributeSeeder extends Seeder
             ]
         );
 
+        // ── Ensure core System attributes (Name & Description) exist ──
+        $coreAttributes = [
+            [
+                'name'        => collect(['en' => 'Name']),
+                'handle'      => 'name',
+                'section'     => 'main',
+                'type'        => \Lunar\FieldTypes\Text::class,
+                'required'    => true,
+                'searchable'  => true,
+                'filterable'  => false,
+                'position'    => 0,
+                'system'      => true,
+                'configuration' => ['richtext' => false],
+            ],
+            [
+                'name'        => collect(['en' => 'Description']),
+                'handle'      => 'description',
+                'section'     => 'main',
+                'type'        => \Lunar\FieldTypes\Text::class,
+                'required'    => false,
+                'searchable'  => true,
+                'filterable'  => false,
+                'position'    => 1,
+                'system'      => false,
+                'configuration' => ['richtext' => true],
+            ],
+        ];
+
         // ── Define custom attributes ──
-        $attributes = [
+        $customAttributes = [
             [
                 'name'        => collect(['en' => 'Strength / Size']),
                 'handle'      => 'strength_size',
@@ -47,7 +75,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => true,
                 'filterable'  => true,
-                'position'    => 1,
+                'position'    => 2,
             ],
             [
                 'name'        => collect(['en' => 'Purity']),
@@ -57,7 +85,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => false,
                 'filterable'  => false,
-                'position'    => 2,
+                'position'    => 3,
             ],
             [
                 'name'        => collect(['en' => 'Research Information']),
@@ -67,7 +95,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => false,
                 'filterable'  => false,
-                'position'    => 3,
+                'position'    => 4,
             ],
             [
                 'name'        => collect(['en' => 'Storage & Handling']),
@@ -77,7 +105,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => false,
                 'filterable'  => false,
-                'position'    => 4,
+                'position'    => 5,
             ],
             [
                 'name'        => collect(['en' => 'Short Description']),
@@ -87,7 +115,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => true,
                 'filterable'  => false,
-                'position'    => 5,
+                'position'    => 6,
             ],
             [
                 'name'        => collect(['en' => 'SEO Title']),
@@ -97,7 +125,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => false,
                 'filterable'  => false,
-                'position'    => 6,
+                'position'    => 7,
             ],
             [
                 'name'        => collect(['en' => 'SEO Description']),
@@ -107,7 +135,7 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => false,
                 'filterable'  => false,
-                'position'    => 7,
+                'position'    => 8,
             ],
             [
                 'name'        => collect(['en' => 'Image Alt Text']),
@@ -117,22 +145,38 @@ class LunarAttributeSeeder extends Seeder
                 'required'    => false,
                 'searchable'  => false,
                 'filterable'  => false,
-                'position'    => 8,
+                'position'    => 9,
             ],
         ];
 
-        foreach ($attributes as $attributeData) {
-            $attr = Attribute::firstOrCreate(
-                ['handle' => $attributeData['handle'], 'attribute_type' => \Lunar\Models\Product::class],
+        $allAttributes = array_merge($coreAttributes, $customAttributes);
+
+        $productMorph = \Lunar\Models\Product::morphName();
+
+        foreach ($allAttributes as $attributeData) {
+            Attribute::updateOrCreate(
+                [
+                    'handle'         => $attributeData['handle'],
+                    'attribute_type' => $productMorph,
+                ],
                 array_merge($attributeData, [
                     'attribute_group_id' => $group->id,
-                    'attribute_type'     => \Lunar\Models\Product::class,
-                    'configuration'      => [],
-                    'system'             => false,
+                    'attribute_type'     => $productMorph,
+                    'configuration'      => $attributeData['configuration'] ?? [],
+                    'system'             => $attributeData['system'] ?? false,
+                    'default_value'      => null,
+                    'description'        => collect(['en' => '']),
                 ])
             );
+        }
+
+        // Attach all product attributes to ProductTypes so they show in forms
+        $attributeIds = Attribute::whereAttributeType($productMorph)->pluck('id');
+        foreach (\Lunar\Models\ProductType::all() as $productType) {
+            $productType->mappedAttributes()->syncWithoutDetaching($attributeIds);
         }
 
         $this->command->info('Muscle Labs product attributes seeded successfully.');
     }
 }
+
